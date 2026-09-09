@@ -4,65 +4,25 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"os"
 	"text/tabwriter"
 )
 
-// Format represents the output format mode.
-type Format string
-
-const (
-	FormatTable Format = "table"
-	FormatJSON  Format = "json"
-)
-
-// Writer handles formatted output.
-type Writer struct {
-	format Format
-	w      io.Writer
+// Format outputs data in the specified format.
+func Format(w io.Writer, format string, headers []string, rows [][]string) error {
+	switch format {
+	case "json":
+		return formatJSON(w, headers, rows)
+	case "table":
+		return formatTable(w, headers, rows)
+	default:
+		return fmt.Errorf("unknown format: %s", format)
+	}
 }
 
-// New creates a new Writer with the given format.
-func New(format string) *Writer {
-	f := Format(format)
-	if f != FormatJSON {
-		f = FormatTable
-	}
-	return &Writer{format: f, w: os.Stdout}
-}
+func formatTable(w io.Writer, headers []string, rows [][]string) error {
+	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
 
-// Write outputs data in the configured format.
-// For JSON, marshals the data and writes it.
-// For table, the caller should use WriteTable for tabular data.
-func (w *Writer) Write(data interface{}) error {
-	if w.format == FormatJSON {
-		enc := json.NewEncoder(w.w)
-		enc.SetIndent("", "  ")
-		return enc.Encode(data)
-	}
-	// Table format — caller should use WriteTable instead
-	fmt.Fprintf(w.w, "%v\n", data)
-	return nil
-}
-
-// WriteTable outputs tabular data using tabwriter.
-func (w *Writer) WriteTable(headers []string, rows [][]string) error {
-	if w.format == FormatJSON {
-		// Convert to map for JSON output
-		var results []map[string]string
-		for _, row := range rows {
-			m := make(map[string]string)
-			for i, h := range headers {
-				if i < len(row) {
-					m[h] = row[i]
-				}
-			}
-			results = append(results, m)
-		}
-		return w.Write(results)
-	}
-
-	tw := tabwriter.NewWriter(w.w, 0, 0, 2, ' ', 0)
+	// Header
 	for i, h := range headers {
 		if i > 0 {
 			fmt.Fprint(tw, "\t")
@@ -71,6 +31,16 @@ func (w *Writer) WriteTable(headers []string, rows [][]string) error {
 	}
 	fmt.Fprintln(tw)
 
+	// Separator
+	for i := range headers {
+		if i > 0 {
+			fmt.Fprint(tw, "\t")
+		}
+		fmt.Fprint(tw, "----")
+	}
+	fmt.Fprintln(tw)
+
+	// Rows
 	for _, row := range rows {
 		for i, cell := range row {
 			if i > 0 {
@@ -84,14 +54,20 @@ func (w *Writer) WriteTable(headers []string, rows [][]string) error {
 	return tw.Flush()
 }
 
-// WriteError outputs an error in the configured format.
-// This is critical for CI — stderr must respect --format json.
-func (w *Writer) WriteError(err error) error {
-	if w.format == FormatJSON {
-		return json.NewEncoder(w.w).Encode(map[string]string{
-			"error": err.Error(),
-		})
+func formatJSON(w io.Writer, headers []string, rows [][]string) error {
+	// Convert to map format
+	var result []map[string]string
+	for _, row := range rows {
+		m := make(map[string]string)
+		for i, h := range headers {
+			if i < len(row) {
+				m[h] = row[i]
+			}
+		}
+		result = append(result, m)
 	}
-	fmt.Fprintf(w.w, "error: %v\n", err)
-	return nil
+
+	enc := json.NewEncoder(w)
+	enc.SetIndent("", "  ")
+	return enc.Encode(result)
 }

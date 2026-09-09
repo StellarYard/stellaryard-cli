@@ -2,6 +2,9 @@ package cmd
 
 import (
 	"fmt"
+	"net/http"
+	"io"
+	"strings"
 
 	"github.com/spf13/cobra"
 )
@@ -14,45 +17,56 @@ var accountsCmd = &cobra.Command{
 var accountsCreateCmd = &cobra.Command{
 	Use:   "create",
 	Short: "Create and fund a new test account",
-	Args:  cobra.ExactArgs(0),
-	RunE: func(cmd *cobra.Command, args []string) error {
+	Run: func(cmd *cobra.Command, args []string) {
 		label, _ := cmd.Flags().GetString("label")
-		// TODO: call core API POST /accounts
-		fmt.Printf("creating account with label: %s\n", label)
-		return nil
+
+		body := fmt.Sprintf(`{"label":"%s"}`, label)
+		resp, err := http.Post(
+			fmt.Sprintf("%s/api/v1/accounts", coreURL),
+			"application/json",
+			strings.NewReader(body),
+		)
+		if err != nil {
+			fatalf(ExitCoreUnreachable, "cannot reach stellaryard-core at %s. Is it running?", coreURL)
+		}
+		defer resp.Body.Close()
+
+		respBody, _ := io.ReadAll(resp.Body)
+		if resp.StatusCode != http.StatusCreated {
+			fatalf(ExitAppError, "account creation failed: %s", string(respBody))
+		}
+
+		if formatStr == "json" {
+			fmt.Println(string(respBody))
+		} else {
+			fmt.Println("Account created successfully")
+		}
 	},
 }
 
 var accountsListCmd = &cobra.Command{
 	Use:   "list",
-	Short: "List managed accounts",
-	Args:  cobra.ExactArgs(0),
-	RunE: func(cmd *cobra.Command, args []string) error {
-		// TODO: call core API GET /accounts
-		// Format output based on --format flag (table or json)
-		fmt.Println("account list: not implemented")
-		return nil
-	},
-}
+	Short: "List all managed accounts",
+	Run: func(cmd *cobra.Command, args []string) {
+		resp, err := http.Get(fmt.Sprintf("%s/api/v1/accounts", coreURL))
+		if err != nil {
+			fatalf(ExitCoreUnreachable, "cannot reach stellaryard-core at %s. Is it running?", coreURL)
+		}
+		defer resp.Body.Close()
 
-var accountsShowCmd = &cobra.Command{
-	Use:   "show <publicKey>",
-	Short: "Show account details and balance",
-	Args:  cobra.ExactArgs(1),
-	RunE: func(cmd *cobra.Command, args []string) error {
-		publicKey := args[0]
-		// TODO: call core API GET /accounts/{publicKey}
-		fmt.Printf("account details for %s: not implemented\n", publicKey)
-		return nil
+		body, _ := io.ReadAll(resp.Body)
+		if formatStr == "json" {
+			fmt.Println(string(body))
+			return
+		}
+
+		fmt.Println("No accounts yet. Use 'stellaryard accounts create' to add one.")
 	},
 }
 
 func init() {
-	accountsCreateCmd.Flags().String("label", "", "human-readable account label")
-
+	accountsCreateCmd.Flags().String("label", "", "Account label")
 	accountsCmd.AddCommand(accountsCreateCmd)
 	accountsCmd.AddCommand(accountsListCmd)
-	accountsCmd.AddCommand(accountsShowCmd)
-
 	rootCmd.AddCommand(accountsCmd)
 }

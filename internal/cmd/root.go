@@ -7,43 +7,37 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// Exit codes — load-bearing for CI automation.
-// Do not add new codes or repurpose existing ones.
+// Exit codes
 const (
-	ExitSuccess          = 0
-	ExitCommandError     = 1
-	ExitCoreUnreachable  = 2
-	ExitCoreApplication  = 3
+	ExitSuccess      = 0
+	ExitArgError     = 1
+	ExitCoreUnreachable = 2
+	ExitAppError     = 3
 )
 
 var (
 	coreURL   string
+	verbose   bool
 	formatStr string
 )
 
 var rootCmd = &cobra.Command{
 	Use:   "stellaryard",
-	Short: "StellarYard — local Stellar/Soroban development environment CLI",
-	Long:  "Scriptable terminal client for StellarYard. Manages containers, accounts, contracts, and ledger data via stellaryard-core's API.",
-	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-		// TODO: validate coreURL is reachable
-		// Classify errors as exit 2 (unreachable) or 3 (application error)
-		return nil
-	},
-	SilenceUsage:  true,
-	SilenceErrors: true,
+	Short: "A scriptable terminal client for StellarYard",
+	Long:  "StellarYard CLI manages local Stellar development environments through stellaryard-core's API.",
+}
+
+func Execute() error {
+	return rootCmd.Execute()
 }
 
 func init() {
-	rootCmd.PersistentFlags().StringVar(&coreURL, "core-url", "http://localhost:8080", "stellaryard-core API URL")
-	rootCmd.PersistentFlags().StringVar(&formatStr, "format", "table", "output format: table or json")
+	rootCmd.PersistentFlags().StringVar(&coreURL, "core-url", "http://localhost:8080", "Core API URL")
+	rootCmd.PersistentFlags().BoolVar(&verbose, "verbose", false, "Enable verbose output")
+	rootCmd.PersistentFlags().StringVar(&formatStr, "format", "table", "Output format: table, json")
 }
 
-// Execute runs the root command.
-func Execute() error {
-	if err := rootCmd.Execute(); err != nil {
-		fmt.Fprintf(os.Stderr, "error: %v\n", err)
-		return err
-	}
-	return nil
+func fatalf(code int, format string, args ...interface{}) {
+	fmt.Fprintf(os.Stderr, "Error: "+format+"\n", args...)
+	os.Exit(code)
 }
