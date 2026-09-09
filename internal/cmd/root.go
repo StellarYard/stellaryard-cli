@@ -9,10 +9,10 @@ import (
 
 // Exit codes
 const (
-	ExitSuccess      = 0
-	ExitArgError     = 1
+	ExitSuccess         = 0
+	ExitArgError        = 1
 	ExitCoreUnreachable = 2
-	ExitAppError     = 3
+	ExitAppError        = 3
 )
 
 var (

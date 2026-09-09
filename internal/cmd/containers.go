@@ -1,10 +1,10 @@
 package cmd
 
 import (
-	"fmt"
-	"net/http"
-	"io"
 	"encoding/json"
+	"fmt"
+	"io"
+	"net/http"
 
 	"github.com/spf13/cobra"
 )

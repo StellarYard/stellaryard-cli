@@ -2,8 +2,8 @@ package cmd
 
 import (
 	"fmt"
-	"net/http"
 	"io"
+	"net/http"
 	"strings"
 
 	"github.com/spf13/cobra"
