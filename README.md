@@ -40,11 +40,24 @@ cd ../stellaryard-core && docker-compose up -d && go run cmd/server/main.go
 ## Commands
 
 ### Container Management
+
+These commands use stellaryard-core at `http://localhost:8080` by default. Set the global `--core-url` flag before the command to use another core instance. Start and stop require a container name:
+
 ```bash
-stellaryard containers start --name horizon
-stellaryard containers stop --name soroban-rpc
-stellaryard containers status
+./stellaryard --core-url http://localhost:8080 containers start --name horizon
+./stellaryard --core-url http://localhost:8080 containers stop --name soroban-rpc
+./stellaryard --core-url http://localhost:8080 containers status
 ```
+
+`containers status` prints a table by default. Use `--format json` to emit the core response as JSON for scripts:
+
+```bash
+./stellaryard --format json containers status
+```
+
+Container names and status are provided by the configured core instance. The CLI returns exit code `2` when it cannot reach core. Start and stop return `3` when core rejects the request.
+
+In JSON mode, `containers status` currently prints core's response body without checking its HTTP status, so an HTTP error body may still exit `0`. The CI example below also validates the expected response shape.
 
 ### Account Management
 ```bash
@@ -66,9 +79,12 @@ stellaryard contracts invoke <contractId> <method> [args...]
 ```
 
 ### Log Streaming
+
+The command accepts a container name and the `--follow` flag. Log streaming is not implemented yet; these invocations currently print a placeholder message.
+
 ```bash
-stellaryard logs horizon --follow
-stellaryard logs soroban-rpc
+./stellaryard logs horizon --follow
+./stellaryard logs soroban-rpc
 ```
 
 ## Exit Codes
@@ -81,6 +97,23 @@ Designed for CI/automation:
 | `1` | Argument error | Bad flags, missing args |
 | `2` | Core unreachable | Connection refused |
 | `3` | Core app error | Deploy failed |
+
+### CI example
+
+The following GitHub Actions step builds the CLI, requests container status as JSON from a core instance, and checks that the response is a JSON array. Set `STELLARYARD_CORE_URL` to a reachable instance in the workflow environment.
+
+```yaml
+- name: Build StellarYard CLI
+  run: go build -o stellaryard ./cmd/stellaryard
+
+- name: Check container status response
+  env:
+    STELLARYARD_CORE_URL: ${{ secrets.STELLARYARD_CORE_URL }}
+  run: |
+    set -euo pipefail
+    ./stellaryard --core-url "$STELLARYARD_CORE_URL" --format json containers status > containers.json
+    jq -e 'type == "array"' containers.json
+```
 
 ## Architecture
 
