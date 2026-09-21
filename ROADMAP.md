@@ -19,6 +19,7 @@ Status legend: `[ ]` not started · `[~]` in progress · `[x]` done
 
 - [ ] `containers start|stop|status`
 - [ ] `logs <container> [--follow]` (WS streaming)
+- [x] README usage documentation for container commands, JSON output, exit codes, and CI automation (#20)
 
 ## Phase 2 — Accounts
 
