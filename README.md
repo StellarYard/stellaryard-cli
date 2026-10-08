@@ -50,7 +50,6 @@ stellaryard containers status
 ```bash
 stellaryard accounts create --label "my-account"
 stellaryard accounts list --format table|json
-stellaryard accounts show <publicKey>
 ```
 
 ### Ledger Inspection
@@ -60,12 +59,20 @@ stellaryard ledger tx list --format table|json --limit N
 ```
 
 ### Contract Operations
+
+> Wired to core, but core's contract endpoints currently return `501 Not Implemented`.
+> Tracked in the issue tracker.
+
 ```bash
 stellaryard contracts deploy <wasm-path>
 stellaryard contracts invoke <contractId> <method> [args...]
 ```
 
 ### Log Streaming
+
+> The command and its `--follow` flag exist, but streaming is not implemented yet —
+> it prints a placeholder until core ships its WebSocket endpoint.
+
 ```bash
 stellaryard logs horizon --follow
 stellaryard logs soroban-rpc
@@ -113,18 +120,19 @@ Designed for CI/automation:
 | Language | Go 1.22 |
 | CLI Framework | [cobra](https://github.com/spf13/cobra) |
 | Output | table (tabwriter) / JSON |
-| API Client | Generated from core's OpenAPI spec |
+| API Client | Hand-rolled HTTP calls — an OpenAPI-generated client is planned (see `internal/client`) |
 
 ## Roadmap
 
 | Phase | Scope | Status |
 |-------|-------|--------|
-| 0 — Foundation | Scaffold, command tree, API client generation | Not started |
-| 1 — Containers | start/stop/status, logs --follow | Not started |
-| 2 — Accounts | create/list/show | Not started |
-| 3 — Ledger | snapshot, tx list | Not started |
-| 4 — Contracts | deploy, invoke | Not started |
-| 5 — Hardening | Error handling, integration tests, shell completion | Not started |
+| 0 — Foundation | Scaffold, command tree, exit codes | ✅ Done |
+| 1 — Containers | start/stop/status | ✅ Done |
+| 1 — Containers | `logs` streaming (`--follow`) | 🚧 Blocked on core's WS endpoint |
+| 2 — Accounts | create/list (`show` planned) | 🚧 In progress |
+| 3 — Ledger | snapshot, tx list | 🚧 Wired — core returns placeholder data |
+| 4 — Contracts | deploy, invoke | 🚧 Wired — core returns `501` |
+| 5 — Hardening | Error handling, integration tests, shell completion | 🔜 Not started |
 
 Full roadmap: [`ROADMAP.md`](./ROADMAP.md)
 
