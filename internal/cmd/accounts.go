@@ -21,11 +21,13 @@ var accountsCreateCmd = &cobra.Command{
 		label, _ := cmd.Flags().GetString("label")
 
 		body := fmt.Sprintf(`{"label":"%s"}`, label)
-		resp, err := http.Post(
-			fmt.Sprintf("%s/api/v1/accounts", coreURL),
-			"application/json",
-			strings.NewReader(body),
-		)
+		req, err := newRequest("POST", fmt.Sprintf("%s/api/v1/accounts", coreURL), strings.NewReader(body))
+		if err != nil {
+			fatalf(ExitAppError, "failed to create request: %v", err)
+		}
+		req.Header.Set("Content-Type", "application/json")
+
+		resp, err := http.DefaultClient.Do(req)
 		if err != nil {
 			fatalf(ExitCoreUnreachable, "cannot reach stellaryard-core at %s. Is it running?", coreURL)
 		}
@@ -48,7 +50,12 @@ var accountsListCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List all managed accounts",
 	Run: func(cmd *cobra.Command, args []string) {
-		resp, err := http.Get(fmt.Sprintf("%s/api/v1/accounts", coreURL))
+		req, err := newRequest("GET", fmt.Sprintf("%s/api/v1/accounts", coreURL), nil)
+		if err != nil {
+			fatalf(ExitAppError, "failed to create request: %v", err)
+		}
+
+		resp, err := http.DefaultClient.Do(req)
 		if err != nil {
 			fatalf(ExitCoreUnreachable, "cannot reach stellaryard-core at %s. Is it running?", coreURL)
 		}

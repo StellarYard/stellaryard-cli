@@ -2,6 +2,8 @@ package cmd
 
 import (
 	"fmt"
+	"io"
+	"net/http"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -17,6 +19,7 @@ const (
 
 var (
 	coreURL   string
+	apiKey    string
 	verbose   bool
 	formatStr string
 )
@@ -33,6 +36,7 @@ func Execute() error {
 
 func init() {
 	rootCmd.PersistentFlags().StringVar(&coreURL, "core-url", "http://localhost:8080", "Core API URL")
+	rootCmd.PersistentFlags().StringVar(&apiKey, "api-key", os.Getenv("STELLARYARD_API_KEY"), "Core API Key (or set STELLARYARD_API_KEY env)")
 	rootCmd.PersistentFlags().BoolVar(&verbose, "verbose", false, "Enable verbose output")
 	rootCmd.PersistentFlags().StringVar(&formatStr, "format", "table", "Output format: table, json")
 }
@@ -40,4 +44,15 @@ func init() {
 func fatalf(code int, format string, args ...interface{}) {
 	fmt.Fprintf(os.Stderr, "Error: "+format+"\n", args...)
 	os.Exit(code)
+}
+
+func newRequest(method, url string, body io.Reader) (*http.Request, error) {
+	req, err := http.NewRequest(method, url, body)
+	if err != nil {
+		return nil, err
+	}
+	if apiKey != "" {
+		req.Header.Set("Authorization", "Bearer "+apiKey)
+	}
+	return req, nil
 }

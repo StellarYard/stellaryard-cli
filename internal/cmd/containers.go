@@ -23,11 +23,12 @@ var containersStartCmd = &cobra.Command{
 			fatalf(ExitArgError, "container name is required (--name)")
 		}
 
-		resp, err := http.Post(
-			fmt.Sprintf("%s/api/v1/containers/%s/start", coreURL, name),
-			"application/json",
-			nil,
-		)
+		req, err := newRequest("POST", fmt.Sprintf("%s/api/v1/containers/%s/start", coreURL, name), nil)
+		if err != nil {
+			fatalf(ExitAppError, "failed to create request: %v", err)
+		}
+
+		resp, err := http.DefaultClient.Do(req)
 		if err != nil {
 			fatalf(ExitCoreUnreachable, "cannot reach stellaryard-core at %s. Is it running?", coreURL)
 		}
@@ -51,11 +52,12 @@ var containersStopCmd = &cobra.Command{
 			fatalf(ExitArgError, "container name is required (--name)")
 		}
 
-		resp, err := http.Post(
-			fmt.Sprintf("%s/api/v1/containers/%s/stop", coreURL, name),
-			"application/json",
-			nil,
-		)
+		req, err := newRequest("POST", fmt.Sprintf("%s/api/v1/containers/%s/stop", coreURL, name), nil)
+		if err != nil {
+			fatalf(ExitAppError, "failed to create request: %v", err)
+		}
+
+		resp, err := http.DefaultClient.Do(req)
 		if err != nil {
 			fatalf(ExitCoreUnreachable, "cannot reach stellaryard-core at %s. Is it running?", coreURL)
 		}
@@ -74,7 +76,12 @@ var containersStatusCmd = &cobra.Command{
 	Use:   "status",
 	Short: "Show container status",
 	Run: func(cmd *cobra.Command, args []string) {
-		resp, err := http.Get(fmt.Sprintf("%s/api/v1/containers", coreURL))
+		req, err := newRequest("GET", fmt.Sprintf("%s/api/v1/containers", coreURL), nil)
+		if err != nil {
+			fatalf(ExitAppError, "failed to create request: %v", err)
+		}
+
+		resp, err := http.DefaultClient.Do(req)
 		if err != nil {
 			fatalf(ExitCoreUnreachable, "cannot reach stellaryard-core at %s. Is it running?", coreURL)
 		}

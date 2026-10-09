@@ -78,6 +78,18 @@ stellaryard logs horizon --follow
 stellaryard logs soroban-rpc
 ```
 
+### Global Flags & Authentication
+
+| Flag | Env Variable | Default | Description |
+|------|--------------|---------|-------------|
+| `--core-url` | — | `http://localhost:8080` | URL of the `stellaryard-core` server |
+| `--api-key` | `STELLARYARD_API_KEY` | *(empty)* | Bearer authentication token for Core |
+| `--format` | — | `table` | Output format (`table`, `json`) |
+| `--verbose` | — | `false` | Enable verbose error logging |
+
+- **Authentication**: When connecting to a Core instance that requires authentication (non-loopback or secured loopback), provide `--api-key <key>` or set `STELLARYARD_API_KEY`.
+- **Remote Access & Transport Security**: If targeting a remote Core server, ensure `--core-url` uses `https://` pointing to a TLS-terminating reverse proxy or is accessed through an encrypted private network (e.g., WireGuard, Tailscale). Never send authentication keys over unencrypted public networks.
+
 ## Exit Codes
 
 Designed for CI/automation:

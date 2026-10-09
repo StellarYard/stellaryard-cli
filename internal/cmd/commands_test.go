@@ -75,6 +75,7 @@ func TestPersistentFlagsDefaults(t *testing.T) {
 	}{
 		{"core-url", "http://localhost:8080", "http://localhost:8080"},
 		{"format", "table", "table"},
+		{"api-key", "", ""},
 	}
 	for _, c := range cases {
 		f := rootCmd.PersistentFlags().Lookup(c.name)
@@ -88,6 +89,31 @@ func TestPersistentFlagsDefaults(t *testing.T) {
 	}
 	if f := rootCmd.PersistentFlags().Lookup("verbose"); f == nil {
 		t.Error("persistent flag --verbose is not registered")
+	}
+}
+
+func TestAPIKeyAuthorizationHeaderForwarding(t *testing.T) {
+	var authHeader string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		authHeader = r.Header.Get("Authorization")
+		w.Header().Set("Content-Type", "application/json")
+		io.WriteString(w, `[]`)
+	}))
+	defer srv.Close()
+
+	oldURL, oldKey := coreURL, apiKey
+	coreURL = srv.URL
+	apiKey = "test-secret-key-123"
+	t.Cleanup(func() {
+		coreURL, apiKey = oldURL, oldKey
+	})
+
+	captureStdout(t, func() {
+		containersStatusCmd.Run(containersStatusCmd, nil)
+	})
+
+	if authHeader != "Bearer test-secret-key-123" {
+		t.Errorf("Authorization header = %q, want %q", authHeader, "Bearer test-secret-key-123")
 	}
 }
 
