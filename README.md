@@ -70,12 +70,17 @@ stellaryard contracts invoke <contractId> <method> [args...]
 
 ### Log Streaming
 
-> The command and its `--follow` flag exist, but streaming is not implemented yet —
-> it prints a placeholder until core ships its WebSocket endpoint.
+Streams logs in real time over WebSocket from `stellaryard-core`:
 
 ```bash
+# View last 100 lines and follow new output
 stellaryard logs horizon --follow
-stellaryard logs soroban-rpc
+
+# View specific number of tail lines
+stellaryard logs soroban-rpc --tail 50
+
+# View historical logs without following
+stellaryard logs horizon --follow=false
 ```
 
 ### Global Flags & Authentication
@@ -140,7 +145,7 @@ Designed for CI/automation:
 |-------|-------|--------|
 | 0 — Foundation | Scaffold, command tree, exit codes | ✅ Done |
 | 1 — Containers | start/stop/status | ✅ Done |
-| 1 — Containers | `logs` streaming (`--follow`) | 🚧 Blocked on core's WS endpoint |
+| 1 — Containers | `logs` streaming (`--follow`) | ✅ Done |
 | 2 — Accounts | create/list (`show` planned) | 🚧 In progress |
 | 3 — Ledger | snapshot, tx list | 🚧 Wired — core returns placeholder data |
 | 4 — Contracts | deploy, invoke | 🚧 Wired — core returns `501` |

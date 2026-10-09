@@ -8,6 +8,8 @@ import (
 	"os"
 	"strings"
 	"testing"
+
+	"github.com/gorilla/websocket"
 )
 
 // commandNames returns the names of every subcommand registered on rootCmd.
@@ -312,15 +314,76 @@ func TestAccountsCreateSendsLabel(t *testing.T) {
 	}
 }
 
-func TestLogsStubDoesNotClaimSuccess(t *testing.T) {
-	// logs is a documented stub until core ships its WebSocket endpoint.
-	// This guards against it silently pretending to stream.
-	out := captureStdout(t, func() {
-		if err := logsCmd.RunE(logsCmd, []string{"horizon"}); err != nil {
-			t.Errorf("logs RunE returned error: %v", err)
+func TestToWebSocketURL(t *testing.T) {
+	cases := []struct {
+		input   string
+		want    string
+		wantErr bool
+	}{
+		{"http://localhost:8080", "ws://localhost:8080", false},
+		{"https://core.internal:8080", "wss://core.internal:8080", false},
+		{"http://localhost:8080/prefix", "ws://localhost:8080/prefix", false},
+		{"ws://already.ws:8080", "ws://already.ws:8080", false},
+		{"wss://already.wss:8080", "wss://already.wss:8080", false},
+		{"ftp://invalid", "", true},
+	}
+
+	for _, tc := range cases {
+		got, err := toWebSocketURL(tc.input)
+		if tc.wantErr {
+			if err == nil {
+				t.Errorf("toWebSocketURL(%q) want error, got nil", tc.input)
+			}
+		} else {
+			if err != nil {
+				t.Errorf("toWebSocketURL(%q) unexpected error: %v", tc.input, err)
+			}
+			if got != tc.want {
+				t.Errorf("toWebSocketURL(%q) = %q, want %q", tc.input, got, tc.want)
+			}
 		}
+	}
+}
+
+func TestLogsCommandStreamsOutput(t *testing.T) {
+	var receivedAuth string
+	upgrader := websocket.Upgrader{}
+
+	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/v1/containers/horizon/logs" {
+			t.Errorf("unexpected path: %q", r.URL.Path)
+		}
+		receivedAuth = r.Header.Get("Authorization")
+		conn, err := upgrader.Upgrade(w, r, nil)
+		if err != nil {
+			t.Fatalf("upgrade failed: %v", err)
+		}
+		defer conn.Close()
+
+		_ = conn.WriteMessage(websocket.TextMessage, []byte("log line 1"))
+		_ = conn.WriteMessage(websocket.TextMessage, []byte("log line 2"))
+		_ = conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, "done"))
+	}))
+	defer s.Close()
+
+	oldURL, oldKey := coreURL, apiKey
+	coreURL = s.URL
+	apiKey = "test-token-789"
+	t.Cleanup(func() {
+		coreURL, apiKey = oldURL, oldKey
 	})
-	if !strings.Contains(out, "not implemented") {
-		t.Errorf("logs output should state it is not implemented, got:\n%s", out)
+
+	out := captureStdout(t, func() {
+		logsCmd.Run(logsCmd, []string{"horizon"})
+	})
+
+	if receivedAuth != "Bearer test-token-789" {
+		t.Errorf("received auth = %q, want 'Bearer test-token-789'", receivedAuth)
+	}
+
+	for _, want := range []string{"log line 1", "log line 2"} {
+		if !strings.Contains(out, want) {
+			t.Errorf("output missing %q:\n%s", want, out)
+		}
 	}
 }
