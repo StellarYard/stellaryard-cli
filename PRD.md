@@ -10,7 +10,7 @@ Like dashboard, this repo holds no independent business logic. Unlike dashboard,
 
 - Developers who prefer terminal workflows over a browser dashboard for day-to-day local dev.
 - CI/automation: e.g., a test pipeline that needs to spin up a local network, fund accounts, deploy a contract, run tests, tear down — scriptably, without a browser.
-- Wave contributors adding individual subcommands as isolated issues (e.g., "add `stellaryard tx list --format json`").
+- Contributors adding individual subcommands as isolated issues (e.g., "add `stellaryard tx list --format json`").
 
 ## What The Product Actually Needs To Do
 
@@ -34,7 +34,7 @@ Like dashboard, this repo holds no independent business logic. Unlike dashboard,
 
 - A developer can replace their current manual CLI/curl workflow entirely with `stellaryard` subcommands.
 - A CI pipeline can use the CLI non-interactively with `--format json` and rely on exit codes, with no human in the loop.
-- New subcommands are addable as isolated Wave issues without touching the underlying core client library.
+- New subcommands are addable as isolated issues without touching the underlying core client library.
 
 ## What Would Break
 

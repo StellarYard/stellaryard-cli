@@ -6,35 +6,35 @@ Status legend: `[ ]` not started · `[~]` in progress · `[x]` done
 
 ## Blocking dependency
 
-- [ ] **`stellaryard-core`'s `/api/openapi.yaml` must be merged before any item below starts.** See `stellaryard-core/ROADMAP.md` Phase 0.
+- [x] **`stellaryard-core`'s `/api/openapi.yaml` must be merged before any item below starts.** See `stellaryard-core/ROADMAP.md` Phase 0.
 
 ## Phase 0 — Foundation
 
-- [ ] Scaffold Go module, `cobra` command tree skeleton, CI (lint + test on PR)
-- [ ] Generate API client from `stellaryard-core`'s `openapi.yaml`; set up regeneration step
-- [ ] Formatter package (`table` / `json` output modes) — build once, shared by every command, not reimplemented per-command
-- [ ] Exit code handling wired at the top level (root command error handling), so individual subcommands don't each reinvent exit-code logic
+- [x] Scaffold Go module, `cobra` command tree skeleton, CI (lint + test on PR)
+- [ ] Generate API client from `stellaryard-core`'s `openapi.yaml`; set up regeneration step (currently hand-rolled HTTP)
+- [x] Formatter package (`table` / `json` output modes) — build once, shared by every command
+- [x] Exit code handling wired at the top level (root command error handling)
 
 ## Phase 1 — Containers
 
-- [ ] `containers start|stop|status`
-- [ ] `logs <container> [--follow]` (WS streaming)
+- [x] `containers start|stop|status`
+- [ ] `logs <container> [--follow]` (WS streaming, blocked on core WS endpoint)
 
 ## Phase 2 — Accounts
 
-- [ ] `accounts create [--label]`
-- [ ] `accounts list [--format table|json]`
+- [x] `accounts create [--label]`
+- [x] `accounts list [--format table|json]`
 - [ ] `accounts show <publicKey>`
 
 ## Phase 3 — Ledger
 
-- [ ] `ledger snapshot`
-- [ ] `ledger tx list [--format table|json] [--limit N]` (depends on core's transaction detail shape being finalized — see `stellaryard-core/ROADMAP.md` Phase 3 open question)
+- [~] `ledger snapshot` (stub command wired, pending core live data)
+- [~] `ledger tx list [--format table|json] [--limit N]` (stub command wired, pending core live data)
 
 ## Phase 4 — Contracts
 
-- [ ] `contracts deploy <wasm-path>`
-- [ ] `contracts invoke <contractId> <method> [args...]`
+- [~] `contracts deploy <wasm-path>` (stub command wired, core returns 501)
+- [~] `contracts invoke <contractId> <method> [args...]` (stub command wired, core returns 501)
 
 ## Phase 5 — Hardening (required for "100% ready")
 

@@ -9,7 +9,7 @@
 
 ## Why This Stack
 
-Go + Cobra is the default choice for CLIs in this ecosystem and keeps this repo in the same language as core, which matters for Wave contributors who may move between core and CLI issues. The critical decision here isn't the framework choice — it's generating the API client from the same OpenAPI spec dashboard uses, instead of hand-writing HTTP calls. Hand-written clients in two repos against one evolving API is how you get silent contract drift; a shared generation source turns a "did the API change?" question into a build-time regeneration step.
+Go + Cobra is the default choice for CLIs in this ecosystem and keeps this repo in the same language as core, which matters for contributors who may move between core and CLI issues. The critical decision here isn't the framework choice — it's generating the API client from the same OpenAPI spec dashboard uses, instead of hand-writing HTTP calls. Hand-written clients in two repos against one evolving API is how you get silent contract drift; a shared generation source turns a "did the API change?" question into a build-time regeneration step.
 
 ## System Overview
 
